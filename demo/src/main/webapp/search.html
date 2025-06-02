@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>可搜索的Select下拉框</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <style>
+    .select2-container {
+      width: 300px !important;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h3>可搜索的Select示例</h3>
+
+  <!-- 普通Select -->
+  <select id="normalSelect" style="width: 300px;">
+    <option value="">请选择...</option>
+    <option value="1">北京</option>
+    <option value="2">上海</option>
+    <option value="3">广州</option>
+    <option value="4">深圳</option>
+    <option value="5">杭州</option>
+    <option value="6">南京</option>
+    <option value="7">成都</option>
+    <option value="8">武汉</option>
+    <option value="9">西安</option>
+    <option value="10">重庆</option>
+  </select>
+
+  <!-- 动态加载数据的Select -->
+  <select id="dynamicSelect" style="width: 300px;">
+    <option value="">请选择...</option>
+  </select>
+</div>
+
+<script>
+  $(document).ready(function() {
+    // 初始化普通Select为可搜索
+    $('#normalSelect').select2({
+      placeholder: "搜索或选择城市",
+      allowClear: true // 允许清除选择
+    });
+
+    // 监听选择变化事件
+    $('#normalSelect').on('change', function() {
+      const selectedValue = $(this).val();
+      const selectedText = $(this).find('option:selected').text();
+
+      console.log('选中的值:', selectedValue);
+      console.log('选中的文本:', selectedText);
+
+      // 可以在这里执行其他操作
+    });
+
+    // 动态加载数据的示例
+    const cities = [
+      { id: 11, text: "天津" },
+      { id: 12, text: "苏州" },
+      { id: 13, text: "青岛" },
+      { id: 14, text: "宁波" },
+      { id: 15, text: "厦门" },
+      { id: 16, text: "长沙" },
+      { id: 17, text: "郑州" },
+      { id: 18, text: "合肥" },
+      { id: 19, text: "福州" },
+      { id: 20, text: "济南" }
+    ];
+
+    // 填充动态数据
+    const dynamicSelect = $('#dynamicSelect');
+    $.each(cities, function(index, city) {
+      dynamicSelect.append(new Option(city.text, city.id));
+    });
+
+    // 初始化为可搜索
+    dynamicSelect.select2({
+      placeholder: "搜索或选择城市",
+      allowClear: true
+    });
+  });
+</script>
+</body>
+</html>

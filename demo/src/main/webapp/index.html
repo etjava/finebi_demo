@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FineBI 图表集成示例</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .chart-container { margin-top: 20px; border: 1px solid #ddd; min-height: 500px; }
+        iframe {
+            width: 100%; height: 500px; border: none;
+        }
+        .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        button { padding: 8px 16px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        select, input { padding: 8px; border: 1px solid #ddd; }
+        .status-message { margin: 10px 0; padding: 10px; background-color: #f0f0f0; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>FineBI 图表集成示例</h1>
+
+    <div class="status-message" id="statusMessage">
+        正在连接 FineBI 服务器...
+    </div>
+
+    <div class="controls">
+        <select id="chartSelector">
+            <option value="-1">选择图表</option>
+        </select>
+
+        <!--<div>
+            <label>日期范围:
+                <input type="date" id="startDate">
+                <input type="date" id="endDate">
+            </label>
+        </div>
+-->
+        <button onclick="loadChartList()">加载图表</button>
+        <button onclick="loginToFineBI()">重新登录</button>
+    </div>
+
+    <div class="chart-container" id="chartContainer">
+        <iframe id="finebiChart" src="" title="FineBI 图表"></iframe>
+    </div>
+</div>
+
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    // 更新状态消息
+    function updateStatus(message, isError = false) {
+        const statusElement = document.getElementById('statusMessage');
+        statusElement.textContent = message;
+        statusElement.style.backgroundColor = isError ? '#ffebee' : '#f0f0f0';
+    }
+    // 登录到 FineBI 服务器
+    function loginToFineBI() {
+        updateStatus('正在登录 FineBI 服务器...');
+        fetch('/finebi?action=login')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('登录请求失败');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    updateStatus('登录成功');
+                    loadChartList();
+                } else {
+                    updateStatus('登录失败: ' + data.message, true);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                updateStatus('登录过程中发生错误: ' + error.message, true);
+            });
+    }
+
+    // 加载选中的图表
+    function loadChartList() {
+        updateStatus('正在加载图表...');
+        fetch('/finebi?action=chartList')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('图表加载失败');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    updateStatus('图表加载完成');
+                    $('#chartSelector').empty();
+                    $.each(data.data, function(key, value) {
+                        $('#chartSelector').append('<option value="'+value.id+'">'+value.name+'</option>');
+                    });
+
+                    setTimeout(function() {
+                        const dynamicSelect = $('#chartSelector');
+                        dynamicSelect.select2({
+                            allowClear: true
+                        });
+                        this.loadChart()
+                    }, 500);
+
+                } else {
+                    updateStatus('图表加载失败: ' + data.message, true);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                updateStatus('图表加载失败: ' + error.message, true);
+            });
+    }
+
+    function loadChart(chartId) {
+        if (chartId=='' || chartId==undefined){
+            chartId="bee9214a49eb4da2b2b8a92f60424685";
+        }
+        fetch('/finebi?action=getToken')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Token请求失败');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    updateStatus('Token请求完成');
+                    const iframe = document.getElementById('finebiChart');
+                    let charUrl= "http://localhost:37799/webroot/decision/v5/design/report/"+chartId+"/view?fine_auth_token="+data.token;
+                    iframe.src = charUrl;
+                    // 监听 iframe 加载完成事件
+                    iframe.onload = function() {
+                        updateStatus('图表加载完成');
+                    };
+
+                } else {
+                    updateStatus('图表加载失败: ' + data.message, true);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                updateStatus('图表加载失败: ' + error.message, true);
+            });
+    }
+
+    // 页面加载时自动登录并加载默认图表
+    document.addEventListener('DOMContentLoaded', () => {
+        loginToFineBI();
+
+        $('#chartSelector').change(function() {
+            const selectedValue = $(this).val();
+            const selectedText = $(this).find('option:selected').text();
+
+            console.log('选中的值:', selectedValue);
+            console.log('选中的文本:', selectedText);
+            loadChart(selectedValue)
+        });
+    });
+</script>
+</body>
+</html>
